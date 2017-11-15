@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic-Tac-Toe Triple Board/AI</title>
+    <script src="p5.js"></script>
+</head>
+<style>
+    .center
+    {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+</style>
+<div class="center" id="canvasholder"></div>
+<body>
+<script>
+
+    var col = 3;
+    var row = 3;
+    var canvasWidth = 990;
+    var canvasHeight = 330;
+    var canvasHandSome = 450;
+    var borders = 30;
+    var cor = 110;
+
+    var players = ["X", "O"];
+    var turn = 0;
+    var turnTest = 0;
+    //var spaces = [];
+    var Boards =
+        {
+            board1: [],
+            board2: [],
+            board3: []
+        };
+
+    var whowon;
+    var winner = false;
+    var cats = false;
+
+    var baseColor =
+    {
+        r: 70,
+        g: 140,
+        b: 255
+    };
+
+    function setup()
+    {
+        var canvas = createCanvas(canvasWidth, canvasHandSome);
+        canvas.parent(canvasholder);
+
+        var cw = canvasWidth/3;
+        for(c = 0; c < col; c++)
+        {
+            for(r = 0; r < row; r++)
+            {
+                Boards.board1.push(new Space(c*cw/3, r*canvasHeight/3+12));
+                Boards.board2.push(new Space(c*cw/3+332, r*canvasHeight/3+12));
+                Boards.board3.push(new Space(c*cw/3+662, r*canvasHeight/3+12));
+            }
+        }
+
+        Boards.board2[4].label = "illegal";
+        console.log("Spaces in Board1: "+Boards.board1.length+", Board2: "+Boards.board2.length+", Board3: "+Boards.board3.length);
+    }
+
+    function draw()
+    {
+        background(baseColor.r, baseColor.g, baseColor.b);
+        strokeWeight(5);
+        for(b = 1; b <= 3; b++)
+        {
+            var cw = canvasWidth/3;
+            line(b*cw/3+((b-1)*cw-((b-1)*cor)), borders, b*cw/3+((b-1)*cw-((b-1)*cor)), canvasHeight-borders);
+            line(2*b*cw/3+((b-1)*cw-((b-1)*(cor*2))), borders, 2*b*cw/3+((b-1)*cw-((b-1)*(cor*2))), canvasHeight-borders);
+            line(borders+((b-1)*cw), (canvasHeight-(borders*2))/3+borders, (cw-borders)+((b-1)*cw), (canvasHeight-(borders*2))/3+borders);
+            line(borders+((b-1)*cw), 2*(canvasHeight-(borders*2))/3+borders, (cw-borders)+((b-1)*cw), 2*(canvasHeight-(borders*2))/3+borders);
+        }
+
+        fillSpace();
+
+        if(winner)
+        {
+            textSize(100);
+            fill(0, 0, 0);
+            text(whowon+" win!", canvasWidth/2, canvasHandSome-50);
+        }
+    }
+
+    var Space = function(x, y)
+    {
+        this.x = x;
+        this.y = y;
+        this.sizeX = 107;
+        this.sizeY = 87;
+        this.label = "";
+        this.test = "";
+    };
+
+    function fillSpace()
+    {
+        fillBoard(Boards.board1);
+        fillBoard(Boards.board2);
+        fillBoard(Boards.board3);
+    }
+
+    function fillBoard(select)
+    {
+        for(var i in select)
+        {
+            select[i].full()
+        }
+    }
+
+    Space.prototype.full = function()
+    {
+        if(this.label === "illegal")
+        {
+            strokeWeight(0);
+            fill(160, 160, 160);
+            rect(this.x, this.y, this.sizeX, this.sizeY);
+        }
+        else
+        {
+            textSize(this.sizeX);
+            textAlign(CENTER, CENTER);
+            fill(0, 0, 0);
+            text(this.label, this.x+this.sizeX/2, this.y+this.sizeY/2);
+        }
+    };
+
+    Space.prototype.empty = function()
+    {
+       return this.label === "";
+    };
+
+//    var winable;
+//    var preventable;
+
+    function mouseClicked()
+    {
+        if(winner) return;
+        console.log(turn);
+        var playerMoved;
+        for(var i in Boards.board1)
+        {
+            for(var j in Boards.board2)
+            {
+                for(var k in Boards.board3)
+                {
+                    playerMoved = Boards.board1[i].place(mouseX, mouseY);
+                    if (!playerMoved) playerMoved = Boards.board2[j].place(mouseX, mouseY);
+                    if (!playerMoved) playerMoved = Boards.board3[k].place(mouseX, mouseY);
+                    if (playerMoved) break;
+                }
+            }
+        }
+        if(winner) return;
+        if(turn = 1)
+        {
+            var win = canWin();
+            console.log("AI detects that win = "+win);
+            if(win) return;
+            if(!win)
+            {
+                var prevent = canPrevent();
+                console.log("Testing Finished");
+            }
+            console.log("AI detects that prevent = "+prevent);
+            if(prevent) return;
+            noPlayerRandom();
+        }
+    }
+
+    function canWin()
+    {
+        turnTest = 1;
+        var winable;
+
+            for(i = 0; i < Boards.board1.length; i++)
+            {
+                console.log("Checking O");
+                console.log(i);
+                winable = Boards.board1[i].willWin(i);
+                console.log(winable);
+                if(winable)
+                {
+                    console.log("Win Move, Board1="+i);
+                    winable = Boards.board1[i].placeNew();
+                    if(winable) return true;
+                }
+            }
+
+        if(!winable) console.log("Not winable");
+
+            for(i = 0; i < Boards.board2.length; i++)
+            {
+                console.log("Checking O");
+                console.log(i);
+                winable = Boards.board2[i].willWin(i);
+                console.log(winable);
+                if(winable)
+                {
+                    console.log("Win Move, Board1="+i);
+                    Boards.board2[i].placeNew();
+                    if(winable) return true;
+                }
+            }
+
+        if(!winable) console.log("Not winable");
+
+            for (i = 0; i < Boards.board3.length; i++)
+            {
+                console.log("Checking O");
+                console.log(i);
+                winable = Boards.board3[i].willWin(i);
+                console.log(winable);
+                if (winable) {
+                    console.log("Win Move, Board3= "+i);
+                    Boards.board3[i].placeNew();
+                    if(winable) return true;
+                }
+            }
+
+        if (!winable) console.log("Not winable");
+    }
+
+    function canPrevent()
+    {
+        turnTest = 0;
+        var preventable;
+            for (j = 0; j < Boards.board1.length; j++) {
+                console.log("Checking X");
+                turnTest = 0;
+                preventable = Boards.board1[j].willWin(j);
+                if (preventable) {
+                    console.log("Prevent Move, Board1, Space: "+j);
+                    var prevented = Boards.board1[j].placeNew();
+                    if (prevented) return true;
+                }
+            }
+            if (!preventable) console.log("Not Preventable");
+
+
+//                var playerMoved ;
+            for (j = 0; j < Boards.board2.length; j++)
+            {
+                console.log("Checking X");
+                turnTest = 0;
+                preventable = Boards.board2[j].willWin(j);
+                if (preventable)
+                {
+                    console.log("Prevent Move, Board2, Space: "+j);
+                    prevented = Boards.board2[j].placeNew();
+                    if(prevented) return true;
+                }
+            }
+            if (!preventable) console.log("Not Preventable");
+
+
+            for (j = 0; j < Boards.board3.length; j++)
+            {
+                console.log("Checking X");
+                turnTest = 0;
+                preventable = Boards.board3[j].willWin(j);
+                if (preventable) {
+                    console.log("Prevent Move, Board3, Space: "+j);
+                    prevented = Boards.board3[j].placeNew();
+                    if(prevented) return true;
+                }
+                if (!preventable) console.log("Not Preventable");
+            }
+
+    }
+
+    Space.prototype.place = function(x, y)
+    {
+        if (x >= this.x && x <= this.x + this.sizeX && y >= this.y && y <= this.y + this.sizeY)
+        {
+            return this.placeNew();
+        }
+    };
+
+    Space.prototype.placeNew = function()
+    {
+        if(!this.empty()){return false;}
+
+        this.label = players[turn];
+
+        checkWin();
+
+        turn++;
+        if (turn >= players.length)
+        {
+            turn = 0;
+        }
+
+        return true;
+    };
+
+    Space.prototype.willWin = function(i)
+    {
+        if(!this.empty()){return false;}
+        console.log("Empty, winning spot?");
+
+        this.test = players[turnTest];
+
+        winable = false;
+        if(i === 0 || i === 3 || i === 6)
+        {
+            var a = i;
+            var b = i+1;
+            var c = i+2;
+
+            winable = testThree(a, b, c);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 1 || i === 4 || i === 7)
+        {
+            var d = i-1;
+            var e = i;
+            var f = i+1;
+
+            winable = testThree(d, e, f);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 2 || i === 5 || i === 8)
+        {
+            var g = i-2;
+            var h = i-1;
+            var j = i;
+
+            winable = testThree(g, h, j);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        if(i === 0 || i === 1 || i === 2)
+        {
+            var k = i;
+            var l = i+3;
+            var m = i+6;
+
+            winable = testThree(k, l, m);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 3 || i === 4 || i === 5)
+        {
+            var n = i-3;
+            var o = i;
+            var p = i+3;
+
+            winable = testThree(n, o, p);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 6 || i === 7 || i === 8)
+        {
+            var q = i-6;
+            var r = i-3;
+            var s = i;
+
+            winable = testThree(q, r, s);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        if(i === 0)
+        {
+            var t = i;
+            var u = i+4;
+            var v = i+8;
+
+            winable = testThree(t, u, v);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 2)
+        {
+            var w = i;
+            var x = i+2;
+            var y = i+4;
+
+            winable = testThree(w, x, y);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 6)
+        {
+            var z = i-4;
+            var aa = i-2;
+            var ab = i;
+
+            winable = testThree(z, aa, ab);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 8)
+        {
+            var ac = i-8;
+            var ad = i-4;
+            var ae = i;
+
+            winable = testThree(ac, ad, ae);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+        }
+        else if(i === 4)
+        {
+            var af = i-4;
+            var ag = i;
+            var ah = i+4;
+
+            winable = testThree(af, ag, ah);
+            if(winable)
+            {
+                this.test = "";
+                return true;
+            }
+            else
+            {
+                var ai = i-2;
+                var aj = i;
+                var ak = i+2;
+
+                winable = testThree(ai, aj, ak);
+                if(winable)
+                {
+                    this.test = "";
+                    return true;
+                }
+            }
+        }
+        for(var tt in Boards.board1)
+        {
+            console.log("Board1 labels for space "+tt+": "+Boards.board1[tt].test+", "+Boards.board1[tt].label);
+
+        }
+        for(var ts in Boards.board2)
+        {
+            console.log("board2 test labels for space "+ts+": "+Boards.board2[ts].test+", "+Boards.board2[ts].label);
+        }
+        for(var tr in Boards.board2)
+        {
+            console.log("Board3 test labels for space "+tr+": "+Boards.board3[tr].test+", "+Boards.board3[tr].label);
+        }
+        this.test = "";
+        return false;
+    };
+
+    function testThree(a, b, c)
+    {
+        if (Boards.board1[a].test !== "" || Boards.board1[a].label !== "")
+        {
+            if(Boards.board1[b].test !== "" || Boards.board1[b].label !== "")
+            {
+                if (Boards.board1[c].test !== "" || Boards.board1[c].label !== "")
+                {
+                    if ((Boards.board1[a].test === Boards.board1[b].label) && (Boards.board1[a].test === Boards.board1[c].label)) {
+                        console.log("A= 1" + a + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board1[b].test === Boards.board1[a].label) && (Boards.board1[b].test === Boards.board1[c].label)) {
+                        console.log("B= 1" + b + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board1[c].test === Boards.board1[a].label) && (Boards.board1[c].test === Boards.board1[b].label)) {
+                        console.log("C= 1" + c + ", placing");
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (Boards.board2[a].label !== "" || Boards.board2[a].label !== "")
+        {
+            if(Boards.board2[b].label !== "" || Boards.board2[b].label !== "")
+            {
+                if (Boards.board2[c].label !== "" || Boards.board2[c].label !== "")
+                {
+                    if ((Boards.board2[a].test === Boards.board2[b].label) && (Boards.board2[a].test === Boards.board2[c].label)) {
+                        console.log("A= 2" + a + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board2[b].test === Boards.board2[a].label) && (Boards.board2[b].test === Boards.board2[c].label)) {
+                        console.log("B= 2" + b + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board2[c].test === Boards.board2[a].label) && (Boards.board2[c].test === Boards.board2[b].label)) {
+                        console.log("C= 2" + c + ", placing");
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (Boards.board3[a].label !== "" || Boards.board3[a].label !== "")
+        {
+            if(Boards.board3[a].label !== "" || Boards.board3[b].label !== "")
+            {
+                if (Boards.board3[a].label !== "" || Boards.board3[b].label !== "")
+                {
+                    if ((Boards.board3[a].test === Boards.board3[b].label) && (Boards.board3[a].test === Boards.board3[c].label)) {
+                        console.log("A= 3" + a + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board3[b].test === Boards.board3[a].label) && (Boards.board3[b].test === Boards.board3[c].label)) {
+                        console.log("B= 3" + b + ", placing");
+                        return true;
+                    }
+                    else if ((Boards.board3[c].test === Boards.board3[a].label) && (Boards.board3[c].test === Boards.board3[b].label)) {
+                        console.log("C= 3" + c + ", placing");
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    function noPlayerRandom()
+    {
+        console.log("Random Place");
+        var noPlayerMoved = false;
+        while(!noPlayerMoved)
+        {
+            var randomMove = Math.floor(Math.random()*9);
+            var randomBoard = Math.floor(Math.random()*3);
+            console.log(randomBoard+","+randomMove);
+
+            if(randomBoard === 0)
+            {
+                noPlayerMoved = Boards.board1[randomMove].placeNew();
+                if(noPlayerMoved)
+                {
+                    break;
+                }
+            }
+            if(randomBoard = 1)
+            {
+                noPlayerMoved = Boards.board2[randomMove].placeNew();
+                if(noPlayerMoved)
+                {
+                    break;
+                }
+            }
+            if(randomBoard = 2)
+            {
+                noPlayerMoved = Boards.board3[randomMove].placeNew();
+                if(noPlayerMoved)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    function checkWin()
+    {
+        console.log("==========================================");
+
+        checkThree(0, 1, 2);
+        checkThree(3, 4, 5);
+        checkThree(6, 7, 8);
+        checkThree(0, 4, 8);
+        checkThree(0, 3, 6);
+        checkThree(1, 4, 7);
+        checkThree(2, 5, 8);
+        checkThree(2, 4, 6);
+    }
+
+    function checkThree(a, b, c)
+    {
+        if (Boards.board1[a].label !== "")
+        {
+            if ((Boards.board1[a].label === Boards.board1[b].label) && (Boards.board1[a].label === Boards.board1[c].label))
+            {
+                console.log(Boards.board1[a].label + " is the WINNER");
+                winner = true;
+                whowon = Boards.board1[a].label;
+            }
+        }
+        if (Boards.board2[a].label !== "")
+        {
+            if ((Boards.board2[a].label === Boards.board2[b].label) && (Boards.board2[a].label === Boards.board2[c].label))
+            {
+                console.log(Boards.board2[a].label + " is the WINNER");
+                winner = true;
+                whowon = Boards.board2[a].label;
+            }
+        }
+        if (Boards.board3[a].label !== "")
+        {
+            if ((Boards.board3[a].label === Boards.board3[b].label) && (Boards.board3[a].label === Boards.board3[c].label))
+            {
+                console.log(Boards.board3[a].label + " is the WINNER");
+                winner = true;
+                whowon = Boards.board3[a].label;
+            }
+        }
+
+    }
+
+    //For later:
+    /*======================================================================================================================
+var randomMove = Math.floor(Math.random(0,9));
+           // var randomMovex = Math.floor(Math.random(100, 1000));
+            //var randomMovey = Math.floor(Math.random(100, 1000));
+            for(var i in spaces)
+            {
+                noPlayerMoved = spaces[i].place(randomMove);
+                if(noPlayerMoved)
+                {
+                    checkWin();
+                    turn = 0;
+                    break;
+                }
+            }
+
+        if(turn = 1)
+        {
+            var choose = Math.round(Math.random(0, spaces.length));
+        }
+
+
+
+    Space.prototype.placeNo = function()
+    {
+        if(!this.empty())
+        {
+            return;
+        }
+
+        this.label = players[turn];
+        checkWin();
+
+        turn++;
+        if(turn >= spaces.length)
+        {
+            turn = 0;
+        }
+    };
+
+
+
+    Space.prototype.placeNo = function(x, y)
+    {
+        if(turn = 1)
+        {
+            if (x >= this.x && x <= this.x + this.size && y >= this.y && y <= this.y + this.size)
+            {
+                this.noPlayer();
+            }
+        }
+    };
+
+    line(400, 100, 400, 1000);
+        line(2*canvasWidth/3, 100, 2*canvasWidth/3, canvasHeight-100);
+        line(100, canvasHeight/3, canvasWidth-100, canvasHeight/3);
+        line(100, 2*canvasHeight/3, canvasWidth-100, 2*canvasHeight/3);
+
+        +((b-1)*cw)
+
+
+            playerMoved = Boards.board2[i].place(mouseX, mouseY);
+            playerMoved = Boards.board3[i].place(mouseX, mouseY);
+
+
+
+    ======================================================================================================================*/
+
+</script>
+</body>
+</html>
+
+
