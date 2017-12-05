@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DOGFIGHT!!!</title>
+    <script src="p5.js"></script>
+</head>
+<body>
+<script>
+
+    var canvasSquared = 1000;
+    var screenSquared = 800;
+
+    //Object speeds
+    var speed = 10;
+    var projectileSpeed = 5;
+    var moveSpeedx = 0;
+    var moveSpeedy = 0;
+    var timing = 0;
+
+    //Plane info
+    var posx = 475;
+    var posy = 525;
+    var planeSize = 75;
+
+    //Movement bool
+    var upPressed = false;
+    var downPressed = false;
+    var rightPressed = false;
+    var leftPressed = false;
+    var doublePressedx = false;
+    var doublePressedy = false;
+
+    //Score multipliers and game status indicators.
+    var score = 0;
+    var collision = false;
+    var scoreTimes = 1;
+
+    //Score bonuses.
+    var dodge = 5;
+    var kill = 10;
+    var levelBonus = 50;
+
+    //Terrain items
+    var terrainType;
+    var terrainHeight;
+    var newTerrain = 450;
+    var thisTerrain = [];
+    var terrainHit = false;
+    var lane = 0;
+
+    function setup()
+    {
+        createCanvas(canvasSquared, canvasSquared);
+    }
+
+    function draw()
+    {
+        fill(255, 0, 0);
+        stroke(0, 0, 0);
+        strokeWeight(5);
+        rect(0, 0, canvasSquared, canvasSquared);
+        fill(255, 255, 255);
+        rect(100, 100, screenSquared, screenSquared);
+
+        fill(0, 0, 0);
+        rect(posx, posy, planeSize, planeSize);
+
+        if(moveSpeedx !== 0 || moveSpeedy !== 0)
+        {
+            if(posx <= 100)
+            {
+                moveSpeedx += 5;
+            }
+            if(posx+planeSize >= 900)
+            {
+                moveSpeedx -= 5;
+            }
+            if(posy <= 100)
+            {
+                moveSpeedy += 5;
+            }
+            if(posy+planeSize >= 900)
+            {
+                moveSpeedy -= 5;
+            }
+        }
+
+        if(moveSpeedx > 5) moveSpeedx = 5;
+        if(moveSpeedx < -5) moveSpeedx = -5;
+        if(moveSpeedy > 5) moveSpeedy = 5;
+        if(moveSpeedy < -5) moveSpeedy = -5;
+
+        if(upPressed)
+        {
+            posy += moveSpeedy;
+        }
+        else if(downPressed)
+        {
+            posy += moveSpeedy;
+        }
+
+        if(leftPressed)
+        {
+            posx += moveSpeedx;
+        }
+        else if(rightPressed)
+        {
+            posx += moveSpeedx;
+        }
+
+        timing ++;
+
+        if(timing >= newTerrain)
+        {
+            terrain();
+            newTerrain = Math.floor(Math.random()*450);
+            timing = 0;
+        }
+
+        if(terrainType === 1)
+        {
+            lane = 100;
+            rect(lane, terrainHeight+100, 267, screenSquared-terrainHeight);
+            terrainHit = true;
+        }
+        else if(terrainType === 2)
+        {
+            lane = 367;
+            rect(lane, terrainHeight+100, 267, screenSquared-terrainHeight);
+            terrainHit = true;
+        }
+        else if(terrainType === 3)
+        {
+            lane = 634;
+            rect(lane, terrainHeight+100, 267, screenSquared-terrainHeight);
+            terrainHit = true;
+        }
+        else
+        {
+            terrainHit = false;
+            lane = 0;
+        }
+
+        if(terrainHit === true) hitDetection(lane, terrainHeight);
+    }
+
+    var missle = function(direction)
+    {
+        this.time = flightTime;
+        this.direction = direction;
+        this.onScreen = false;
+    };
+
+    function terrain()
+    {
+        terrainType = Math.floor(Math.random()*6);
+        terrainHeight = Math.floor(Math.random()*800);
+
+        console.log("Type: "+terrainType+" Height: "+terrainHeight);
+    }
+
+    var enemy = function(location)
+    {
+        this.location = location;
+    };
+
+    var level = function(name)
+    {
+        this.name = name;
+    };
+
+    //Movement keys
+    function keyPressed()
+    {
+        if(keyCode === UP_ARROW)
+        {
+            moveSpeedy -= 5;
+            upPressed = true;
+        }
+        else if(keyCode === DOWN_ARROW)
+        {
+            moveSpeedy += 5;
+            downPressed = true;
+        }
+
+        if(keyCode === RIGHT_ARROW)
+        {
+            moveSpeedx += 5;
+            rightPressed = true;
+        }
+        else if(keyCode === LEFT_ARROW)
+        {
+            moveSpeedx -= 5;
+            leftPressed = true;
+        }
+    }
+
+    function keyReleased()
+    {
+        if(keyCode === UP_ARROW)
+        {
+            moveSpeedy += 5;
+            upPressed = false;
+        }
+        else if(keyCode === DOWN_ARROW)
+        {
+            moveSpeedy -= 5;
+            downPressed = false;
+        }
+
+        if(keyCode === RIGHT_ARROW)
+        {
+            moveSpeedx -= 5;
+            rightPressed = false;
+        }
+        else if(keyCode === LEFT_ARROW)
+        {
+            moveSpeedx += 5;
+            leftPressed = false;
+        }
+    }
+
+    function hitDetection(laneX, laneY)
+    {
+        if((posx <= laneX+267 || posx+planeSize >= laneX) && (posy+planeSize >= laneY))
+        {
+            console.log("Life lost");
+        }
+    }
+
+</script>
+</body>
+</html>

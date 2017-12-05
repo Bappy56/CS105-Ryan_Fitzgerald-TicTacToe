@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DOGFIGHT!!!</title>
+    <script src="p5.js"></script>
+</head>
+<body>
+<script>
+
+    var canvasSquared = 1000;
+    var screenSquared = 800;
+
+    //Object speeds
+    var speed = 10;
+    var projectileSpeed = 5;
+    var moveSpeedx = 0;
+    var moveSpeedy = 0;
+
+    //Plane info
+    var posx = 475;
+    var posy = 525;
+    var planeSize = 75;
+
+    //Score multipliers and game status indicators.
+    var collision = false;
+    var scoreTimes = 1;
+
+    //Score items
+    var dodge = 5;
+    var kill = 10;
+    var levelBonus = 50;
+    var score = 0;
+
+    var missileImage;
+    var enemyImage;
+
+    function preload()
+    {
+        missileImage = loadImage("./Photos/Rocket.png");
+        enemyImage = loadImage("./Photos/enemyPlane.png");
+        console.log("Preload complete");
+    }
+
+    function setup()
+    {
+        createCanvas(canvasSquared, canvasSquared);
+    }
+
+    function draw()
+    {
+        angleMode(DEGREES);
+        fill(255, 0, 0);
+        stroke(0, 0, 0);
+        strokeWeight(5);
+        rect(0, 0, canvasSquared, canvasSquared);
+        fill(255, 255, 255);
+        rect(100, 100, screenSquared, screenSquared);
+
+        fill(0, 0, 0);
+        rect(posx, posy, planeSize, planeSize);
+
+        // selectTerrain();
+        selectMissile();
+        movement();
+
+        for(var i = 0; i <= thisTerrain.length; i++)
+        {
+            try
+            {
+                var testing = thisTerrain[i].type;
+            }
+            catch(err)
+            {
+                break;
+            }
+
+            thisTerrain[i].size += thisTerrain[i].growing;
+
+            if(thisTerrain[i].type === 0) thisTerrain.pop();
+            else if (thisTerrain[i].type === 1)
+            {
+                lane = 100;
+                rect(lane, thisTerrain[i].size + 100, 267, screenSquared - thisTerrain[i].size);
+                if(screenSquared - thisTerrain[i].size >= screenSquared-thisTerrain[i].height)
+                {
+                    thisTerrain[i].growing = 0;
+                    thisTerrain[i].hitable = true;
+                    thisTerrain[i].delay += 1;
+                }
+                if(thisTerrain[i].delay >= 30)
+                {
+                    thisTerrain[i].growing = 15;
+                    if(thisTerrain[i].size >= 800)
+                    {
+                        thisTerrain[i].growing = 0;
+                        thisTerrain[i].hitable = false;
+                        thisTerrain.shift();
+                    }
+                }
+            }
+            else if (thisTerrain[i].type === 2)
+            {
+                lane = 367;
+                rect(lane, thisTerrain[i].size + 100, 267, screenSquared - thisTerrain[i].size);
+                if(screenSquared - thisTerrain[i].size >= screenSquared-thisTerrain[i].height)
+                {
+                    thisTerrain[i].growing = 0;
+                    thisTerrain[i].hitable = true;
+                    thisTerrain[i].delay += 1;
+                }
+                if(thisTerrain[i].delay >= 30)
+                {
+                    thisTerrain[i].growing = 15;
+                    if(thisTerrain[i].size >= 800)
+                    {
+                        thisTerrain[i].growing = 0;
+                        thisTerrain[i].hitable = false;
+                        thisTerrain.shift();
+                    }
+                }
+            }
+            else if (thisTerrain[i].type === 3)
+            {
+                lane = 634;
+                rect(lane, thisTerrain[i].size + 100, 267, screenSquared - thisTerrain[i].size);
+                if(screenSquared - thisTerrain[i].size >= screenSquared-thisTerrain[i].height)
+                {
+                    thisTerrain[i].growing = 0;
+                    thisTerrain[i].hitable = true;
+                    thisTerrain[i].delay += 1;
+                }
+                if(thisTerrain[i].delay >= 30)
+                {
+                    thisTerrain[i].growing = 15;
+                    if(thisTerrain[i].size >= 800)
+                    {
+                        thisTerrain[i].growing = 0;
+                        thisTerrain[i].hitable = false;
+                        thisTerrain.shift();
+                    }
+                }
+            }
+
+            try
+            {
+                var hitTesting = thisTerrain[i].hitable;
+            }
+            catch(err)
+            {
+                break;
+            }
+
+            if(thisTerrain[i].hitable) hitDetection(lane, (thisTerrain[i].size + 100));
+        }
+
+        for(var j = 0; j <= thisMissile.length; j++)
+        {
+            if(thisMissile[j] == null) break;
+            thisMissile[j].x += thisMissile[j].speedX;
+            thisMissile[j].y += thisMissile[j].speedY;
+            rotate(thisMissile[j].angle);
+            image(missileImage, thisMissile[j].x+100, thisMissile[j].y+100, 30, 30);
+            console.log("Missile running loop. j= "+j+"\nX: "+thisMissile[j].x+"\nY: "+thisMissile[j].y);
+        }
+    }
+
+    //Terrain items
+    var newTerrain = 450;
+    var thisTerrain = [];
+    var terrainType;
+    var terrainHeight;
+    var lane = 0;
+    var timingTerrain = 0;
+    function selectTerrain()
+    {
+        timingTerrain++;
+
+        if(timingTerrain >= newTerrain)
+        {
+            terrainType = Math.floor(Math.random()*6);
+            terrainHeight = Math.floor(Math.random()*800);
+
+            if(terrainHeight >= 500) terrainHeight = 500;
+            console.log(terrainHeight);
+
+            thisTerrain.push(new terrain(terrainType, terrainHeight));
+
+            newTerrain = Math.floor(Math.random()*450);
+            if(newTerrain <= 180) newTerrain = 180;
+            timingTerrain = 0;
+        }
+    }
+
+    var terrain = function(type, height)
+    {
+        this.type = type;
+        this.height = height;
+        this.size = 800;
+        this.hitable = false;
+        this.delay = 0;
+        this.growing = -5;
+    };
+
+    //Missile items
+    var timingMissile = 0;
+    var newMissile = 600;
+    var missileX;
+    var missileY;
+    var missileTime;
+    var fireMissile;
+    var missileSide;
+    var missileAngle;
+    var thisMissile = [];
+    function selectMissile()
+    {
+        timingMissile++;
+
+        if(timingMissile >= newMissile)
+        {
+            fireMissile = Math.floor(Math.random()*2);
+            if(fireMissile === 1)
+            {
+                missileSide = Math.floor(Math.random()*5);
+                if(missileSide === 0)
+                {
+                    missileX = 0;
+                    missileY = Math.floor(Math.random()*800);
+                    if(missileY <= 400) missileY = 400;
+                    var missileAngle1 = missileY/800;
+                    missileAngle = (45*missileAngle1)+40;
+                    var speedX = (1-missileAngle1)*5;
+                    var speedY = missileAngle1*5;
+                }
+                else if(missileSide === 1)
+                {
+                    missileX = Math.floor(Math.random()*screenSquared);
+                    missileY = screenSquared;
+                    missileAngle1 = missileX/screenSquared;
+                    missileAngle = 90*missileAngle1+40;
+                    speedX = (1-missileAngle1)*5;
+                    speedY = missileAngle1*5;
+                }
+                else if(missileSide === 2) 
+                {
+                    missileX = screenSquared;
+                    missileY = Math.floor(Math.random() * 800);
+                    if (missileY <= 400) missileY = 400;
+                    missileAngle1 = missileY / 400;
+                    missileAngle = -(45 * missileAngle1) + 40;
+                    speedX = -(1 - missileAngle1) * 5;
+                    speedY = missileAngle1 * 5;
+                }
+                missileTime = Math.floor(Math.random()*420);
+
+                if(missileTime <= 300) missileTime = 300;
+                console.log("Missle selected. \nSide: "+missileSide+"\nX: "+missileX+"\nY: "+missileY+"\nAngle: "+missileAngle);
+
+                thisMissile.push(new missile(missileX, missileY, missileAngle, missileTime, speedX, speedY));
+            }
+            newMissile = Math.floor(Math.random()*600);
+            if(newMissile <= 420) newMissile = 420;
+            timingMissile = 0;
+        }
+    }
+
+    var missile = function(missileX, missileY, angle, time, speedX, speedY)
+    {
+        this.x = missileX;
+        this.y = missileY;
+        this.angle = angle;
+        this.time = time;
+        this.speedX = speedX;
+        this.speedY = speedY;
+        this.onScreen = false;
+    };
+
+    function selectEnemy()
+    {
+
+    }
+
+    var enemy = function(enemyX, enemyY, entrance)
+    {
+        this.x = enemyX;
+        this.y = enemyY;
+        this.direction = entrance;
+        this.changes = 0;
+        this.hit = false;
+    };
+
+    //Movement
+    var upPressed = false;
+    var downPressed = false;
+    var rightPressed = false;
+    var leftPressed = false;
+    function movement()
+    {
+        if(moveSpeedx !== 0)
+        {
+            if (posx <= 100)
+            {
+                moveSpeedx += 5;
+            }
+            if (posx + planeSize >= 900)
+            {
+                moveSpeedx -= 5;
+            }
+        }
+        if(moveSpeedy !== 0)
+        {
+            if(posy <= 100)
+            {
+                moveSpeedy += 5;
+            }
+            if(posy+planeSize >= 900)
+            {
+                moveSpeedy -= 5;
+            }
+        }
+
+        if(moveSpeedx > 5) moveSpeedx = 5;
+        if(moveSpeedx < -5) moveSpeedx = -5;
+        if(moveSpeedy > 5) moveSpeedy = 5;
+        if(moveSpeedy < -5) moveSpeedy = -5;
+
+        if(upPressed)
+        {
+            posy += moveSpeedy;
+        }
+        else if(downPressed)
+        {
+            posy += moveSpeedy;
+        }
+
+        if(leftPressed)
+        {
+            posx += moveSpeedx;
+        }
+        else if(rightPressed)
+        {
+            posx += moveSpeedx;
+        }
+    }
+    function keyPressed()
+    {
+        if(keyCode === UP_ARROW)
+        {
+            moveSpeedy -= 5;
+            upPressed = true;
+        }
+        else if(keyCode === DOWN_ARROW)
+        {
+            moveSpeedy += 5;
+            downPressed = true;
+        }
+
+        if(keyCode === RIGHT_ARROW)
+        {
+            moveSpeedx += 5;
+            rightPressed = true;
+        }
+        else if(keyCode === LEFT_ARROW)
+        {
+            moveSpeedx -= 5;
+            leftPressed = true;
+        }
+    }
+
+    function keyReleased()
+    {
+        if(keyCode === UP_ARROW)
+        {
+            moveSpeedy += 5;
+            upPressed = false;
+        }
+        else if(keyCode === DOWN_ARROW)
+        {
+            moveSpeedy -= 5;
+            downPressed = false;
+        }
+
+        if(keyCode === RIGHT_ARROW)
+        {
+            moveSpeedx -= 5;
+            rightPressed = false;
+        }
+        else if(keyCode === LEFT_ARROW)
+        {
+            moveSpeedx += 5;
+            leftPressed = false;
+        }
+    }
+
+    var guns = function(bulletX, bulletY)
+    {
+        this.x = bulletX;
+        this.y = bulletY;
+        this.onScreen = true;
+        this.speed = 20;
+    };
+
+    //Hit detections
+    function hitDetection(laneX, laneY)
+    {
+        if(posy+planeSize >= laneY)
+        {
+            if(posx <= laneX+267 && posx+planeSize >= laneX)
+            {
+                collision = true;
+                console.log("Life lost");
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
